@@ -250,10 +250,35 @@ def horizontal_bar_chart(categories, values, axis_name="", height="340px", color
     }
 
 
-def area_growth_chart(categories, values, axis_name="", height="320px", color=None):
+def area_growth_chart(categories, values, axis_name="", height="320px", color=None,
+                       goal_value=None, goal_label=None):
     """A single smooth cumulative-growth area chart with a strong
-    gradient fade - used for the 'Revenue Growth' cumulative chart."""
+    gradient fade - used for the 'Revenue Growth' cumulative chart.
+
+    goal_value: optional - draws a dashed horizontal reference line at
+    this y-value (e.g. a revenue target) via ECharts markLine, so growth
+    can be read against a target instead of just eyeballed."""
     c = color or PALETTE[0]
+    series = {
+        "type": "line",
+        "smooth": True,
+        "showSymbol": False,
+        "lineStyle": {"width": 3, "color": c},
+        "areaStyle": {"color": _gradient(c + "70", c + "05")},
+        "data": values,
+    }
+    if goal_value is not None:
+        label = goal_label or f"Goal: {goal_value:,.0f}"
+        series["markLine"] = {
+            "symbol": "none",
+            "silent": True,
+            "lineStyle": {"color": PALETTE[2], "type": "dashed", "width": 2},
+            "label": {
+                "formatter": label, "color": PALETTE[2],
+                "fontFamily": FONT_FAMILY, "position": "insideEndTop",
+            },
+            "data": [{"yAxis": goal_value}],
+        }
     return {
         "backgroundColor": "transparent",
         "grid": {"left": "8%", "right": "5%", "top": "10%", "bottom": "12%", "containLabel": True},
@@ -274,12 +299,5 @@ def area_growth_chart(categories, values, axis_name="", height="320px", color=No
             "splitLine": {"lineStyle": {"color": GRID_LINE_COLOR, "type": "dashed"}},
             "axisLabel": {"color": TEXT_COLOR, "fontFamily": FONT_FAMILY},
         },
-        "series": [{
-            "type": "line",
-            "smooth": True,
-            "showSymbol": False,
-            "lineStyle": {"width": 3, "color": c},
-            "areaStyle": {"color": _gradient(c + "70", c + "05")},
-            "data": values,
-        }],
+        "series": [series],
     }
