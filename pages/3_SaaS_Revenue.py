@@ -7,7 +7,7 @@ from streamlit_echarts import st_echarts
 from utils import calculations as calc
 from utils import charts
 from utils import sheets
-from utils.styling import inject_css, fmt_money, graffiti_divider, confirm_delete
+from utils.styling import inject_css, fmt_money, graffiti_divider, confirm_delete, goal_progress
 
 inject_css()
 
@@ -130,12 +130,7 @@ with tab_overview:
                 st.rerun()
 
         if goal:
-            pct = min(current_total / goal, 1.0) if goal > 0 else 0.0
-            st.markdown(
-                f"**{fmt_money(current_total, base_currency)} / {fmt_money(goal, base_currency)} "
-                f"— {pct * 100:.0f}% to goal**"
-            )
-            st.progress(pct)
+            goal_progress(current_total, goal, base_currency)
 
         opts = charts.area_growth_chart(
             monthly_total["month"].tolist(), monthly_total["cumulative"].round(2).tolist(),
