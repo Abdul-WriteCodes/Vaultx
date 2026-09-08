@@ -88,6 +88,22 @@ def missing_fx_currencies(*dfs_with_currency_col, rates: dict) -> list:
     return sorted([c for c in used if c and c not in rates])
 
 
+def rate_for_currency(currency: str, rates: dict, base: str) -> float:
+    """Single-value version of the rate lookup used by _convert - for
+    snapshotting the rate that applied to ONE entry at the moment it's
+    being logged (see amount_base_at_log below), not for bulk aggregation."""
+    if currency == base:
+        return 1.0
+    return rates.get(currency, 1.0)  # fallback 1.0 only as last resort
+
+
+def convert_amount(amount: float, currency: str, rates: dict, base: str) -> float:
+    """Single-value convert - used when logging ONE new SaaS entry, to
+    freeze what it's worth in base currency right now (see
+    amount_base_at_log below)."""
+    return float(amount or 0) * rate_for_currency(currency, rates, base)
+
+
 def _convert(amounts: pd.Series, currencies: pd.Series, rates: dict, base: str) -> pd.Series:
     """Convert each amount to base currency using its own currency's
     rate. Amounts in an unrecognized currency (no saved rate) are left
@@ -95,14 +111,34 @@ def _convert(amounts: pd.Series, currencies: pd.Series, rates: dict, base: str) 
     base-currency - callers should surface missing_fx_currencies() to
     the user so this never happens quietly."""
     amounts = pd.to_numeric(amounts, errors="coerce").fillna(0)
-
-    def rate_for(cur):
-        if cur == base:
-            return 1.0
-        return rates.get(cur, 1.0)  # fallback 1.0 only as last resort
-
-    factors = currencies.map(rate_for)
+    factors = currencies.map(lambda c: rate_for_currency(c, rates, base))
     return amounts * factors
+
+
+def _resolve_base_amount(df: pd.DataFrame, amount_col: str, currency_col: str,
+                          rates: dict, base: str) -> pd.Series:
+    """Prefer a FROZEN amount_base_at_log (captured the moment the entry
+    was logged, using the FX rate in effect at that time) over live
+    conversion. Without this, editing an exchange rate in Settings
+    retroactively re-prices every past entry in that currency, which
+    silently reshapes historical revenue/growth charts even though
+    nothing about the actual sale changed.
+
+    Falls back to a live _convert() for rows that predate this feature
+    (no snapshot saved yet) or whose snapshot was taken under a
+    different reporting currency (base_currency was changed since) -
+    for those, live conversion at today's rate is the best available
+    estimate."""
+    live = _convert(df[amount_col], df[currency_col], rates, base)
+    if "amount_base_at_log" not in df.columns:
+        return live
+    snapshot = pd.to_numeric(df["amount_base_at_log"], errors="coerce")
+    if "base_currency_at_log" in df.columns:
+        same_base = df["base_currency_at_log"] == base
+    else:
+        same_base = pd.Series(False, index=df.index)
+    use_snapshot = snapshot.notna() & same_base
+    return snapshot.where(use_snapshot, live)
 
 
 def convert_to_base(amounts: pd.Series, currencies: pd.Series, rates: dict, base: str) -> pd.Series:
@@ -184,7 +220,7 @@ def saas_transactions_monthly(saas_transactions: pd.DataFrame, rates: dict, base
         return pd.DataFrame(columns=["product", "month", "revenue"])
     tx = saas_transactions.copy()
     tx["amount"] = _to_numeric(tx["amount"])
-    tx["amount_base"] = _convert(tx["amount"], tx["currency"], rates, base)
+    tx["amount_base"] = _resolve_base_amount(tx, "amount", "currency", rates, base)
     tx["date"] = pd.to_datetime(tx["date"], errors="coerce")
     tx = tx.dropna(subset=["date"])
     tx["month"] = tx["date"].dt.to_period("M").astype(str)
@@ -203,7 +239,7 @@ def saas_reconciled_monthly(saas_monthly: pd.DataFrame, saas_transactions: pd.Da
     else:
         m = saas_monthly.copy()
         m["amount"] = _to_numeric(m["amount"])
-        m["revenue"] = _convert(m["amount"], m["currency"], rates, base)
+        m["revenue"] = _resolve_base_amount(m, "amount", "currency", rates, base)
         manual = m[["product", "month", "revenue"]]
 
     if manual.empty and tx_monthly.empty:
