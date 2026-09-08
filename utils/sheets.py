@@ -44,10 +44,17 @@ SHEET_SCHEMAS = {
     ],
     "SaaSMonthly": [
         "entry_id", "product", "month", "amount", "currency", "notes", "created_at",
+        # Snapshot of what this amount was worth in the reporting currency
+        # AT THE MOMENT IT WAS LOGGED, so later edits to the exchange rate
+        # in Settings don't retroactively reshape historical totals/charts.
+        # Rows saved before this feature shipped just have these blank -
+        # calculations.py falls back to live conversion for those.
+        "fx_rate_at_log", "amount_base_at_log", "base_currency_at_log",
     ],
     "SaaSTransactions": [
         "transaction_id", "product", "date", "amount", "currency",
         "customer", "payment_method", "notes", "created_at",
+        "fx_rate_at_log", "amount_base_at_log", "base_currency_at_log",
     ],
     "Expenses": [
         "expense_id", "expense_date", "category", "stream", "amount",
@@ -260,16 +267,30 @@ def create_payment(data: dict) -> str:
     return payid
 
 
-def upsert_saas_monthly(product: str, month: str, amount: float, currency: str, notes: str) -> str:
+def upsert_saas_monthly(product: str, month: str, amount: float, currency: str, notes: str,
+                         fx_rate_at_log: float = None, amount_base_at_log: float = None,
+                         base_currency_at_log: str = None) -> str:
     """One row per product+month. If a row already exists for this
     product+month, overwrite its amount/notes instead of creating a
-    duplicate."""
+    duplicate.
+
+    The fx_rate_at_log/amount_base_at_log/base_currency_at_log trio (all
+    optional) freeze what `amount` was worth in the reporting currency
+    right now, at save time - pass these (computed by the caller via
+    calc.convert_amount/rate_for_currency) so future edits to the
+    exchange rate don't retroactively re-price this entry. Every save
+    (create or edit) re-snapshots using the CURRENT rate, since editing
+    the amount/currency is a deliberate new decision."""
     existing = read_sheet("SaaSMonthly")
     match = existing[(existing["product"] == product) & (existing["month"] == month)]
+    snapshot = {
+        "fx_rate_at_log": fx_rate_at_log, "amount_base_at_log": amount_base_at_log,
+        "base_currency_at_log": base_currency_at_log,
+    }
     if not match.empty:
         entry_id = match.iloc[0]["entry_id"]
         update_row("SaaSMonthly", "entry_id", entry_id, {
-            "amount": amount, "currency": currency, "notes": notes,
+            "amount": amount, "currency": currency, "notes": notes, **snapshot,
         })
         return entry_id
     entry_id = _new_id("SM")
@@ -277,6 +298,7 @@ def upsert_saas_monthly(product: str, month: str, amount: float, currency: str, 
         "entry_id": entry_id, "product": product, "month": month,
         "amount": amount, "currency": currency, "notes": notes,
         "created_at": datetime.now().isoformat(timespec="seconds"),
+        **snapshot,
     })
     return entry_id
 
