@@ -228,6 +228,17 @@ def saas_total_by_product(saas_monthly: pd.DataFrame, saas_transactions: pd.Data
     return reconciled.groupby("product")["revenue"].sum().reset_index().sort_values("revenue", ascending=False)
 
 
+def saas_monthly_total(reconciled: pd.DataFrame) -> pd.DataFrame:
+    """All SaaS products summed together per month (in base currency) -
+    the input is the output of saas_reconciled_monthly, so it already
+    respects the manual-total-overrides-transactions rule per
+    product+month. Used for the combined 'total SaaS revenue over
+    time' growth chart."""
+    if reconciled.empty:
+        return pd.DataFrame(columns=["month", "revenue"])
+    return reconciled.groupby("month")["revenue"].sum().reset_index().sort_values("month")
+
+
 def shadowed_saas_periods(saas_monthly: pd.DataFrame, saas_transactions: pd.DataFrame,
                            rates: dict, base: str) -> pd.DataFrame:
     """Product+months where BOTH a manual monthly total AND individual
