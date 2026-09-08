@@ -259,6 +259,52 @@ hr {{ border-color: var(--border) !important; margin: 1rem 0 !important; }}
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--dot-color, {TEAL});
 }}
+/* ---- Goal progress: value-vs-target readout with a gradient bar ---- */
+.goal-progress {{
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+}}
+.goal-progress-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+}}
+.goal-progress-amounts {{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text);
+}}
+.goal-progress-sep {{ color: var(--muted); margin: 0 2px; }}
+.goal-progress-pct {{
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, {TEAL}, {VIOLET});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}}
+.goal-progress-track {{
+    width: 100%;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}}
+.goal-progress-fill {{
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, {TEAL}, {VIOLET});
+    transition: width 0.5s ease;
+}}
 .status-pill {{
     display: inline-block;
     padding: 3px 11px;
@@ -641,6 +687,33 @@ def metrics_grid(items, columns: int = 2):
 def status_pill(status: str) -> str:
     cls = {"Paid": "status-paid", "Partial": "status-partial", "Unpaid": "status-unpaid"}.get(status, "status-unpaid")
     return f'<span class="status-pill {cls}">{status}</span>'
+
+
+def goal_progress(current_value: float, goal_value: float, currency_code: str = "USD"):
+    """Value-vs-target readout: amounts + percentage + a gradient
+    progress bar, styled to match stat_list/metric_card elsewhere.
+
+    Built as raw HTML via st.markdown(unsafe_allow_html=True) rather
+    than plain st.markdown text + st.progress - st.markdown treats
+    anything between two '$' characters as LaTeX, so a plain string
+    like '$58.77 / $1,000.00' gets silently mangled (the first '$...$'
+    pair renders as a math block instead of two currency amounts)."""
+    pct = 0.0
+    if goal_value:
+        pct = max(0.0, min(current_value / goal_value, 1.0))
+    st.markdown(
+        f'<div class="goal-progress fade-in">'
+        f'<div class="goal-progress-row">'
+        f'<span class="goal-progress-amounts">{fmt_money(current_value, currency_code)} '
+        f'<span class="goal-progress-sep">/</span> {fmt_money(goal_value, currency_code)}</span>'
+        f'<span class="goal-progress-pct">{pct * 100:.0f}%</span>'
+        f'</div>'
+        f'<div class="goal-progress-track">'
+        f'<div class="goal-progress-fill" style="width:{pct * 100:.2f}%;"></div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 
 CURRENCY_SYMBOLS = {
