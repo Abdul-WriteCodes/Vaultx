@@ -74,7 +74,12 @@ with tab_overview:
     if reconciled.empty:
         st.info("No SaaS revenue logged yet — use the tabs above to add a monthly total or a transaction.")
     else:
-        st.caption(f"All totals below are converted to your reporting currency, **{base_currency}**.")
+        st.caption(
+            f"All totals below are in your reporting currency, **{base_currency}**. Entries logged "
+            f"from now on freeze the exchange rate at save time, so editing a rate in Settings later "
+            f"won't reshape past totals — only entries logged before this existed still float with "
+            f"the current rate."
+        )
         by_product = calc.saas_total_by_product(saas_monthly, saas_transactions, rates, base_currency)
         cols = st.columns(min(len(by_product), 4) or 1)
         for i, (_, r) in enumerate(by_product.iterrows()):
@@ -129,7 +134,12 @@ with tab_monthly:
                 st.error("Month is required.")
             else:
                 existing = saas_monthly[(saas_monthly["product"] == product) & (saas_monthly["month"] == month_clean)]
-                sheets.upsert_saas_monthly(product, month_clean, amount, currency, notes)
+                fx_rate = calc.rate_for_currency(currency, rates, base_currency)
+                amount_base = calc.convert_amount(amount, currency, rates, base_currency)
+                sheets.upsert_saas_monthly(
+                    product, month_clean, amount, currency, notes,
+                    fx_rate_at_log=fx_rate, amount_base_at_log=amount_base, base_currency_at_log=base_currency,
+                )
                 if not existing.empty:
                     st.toast(f"Updated {product} total for {month}", icon="✅")
                 else:
@@ -169,10 +179,14 @@ with tab_monthly:
                     elif not e_month_clean:
                         st.error("Month is required.")
                     else:
+                        e_fx_rate = calc.rate_for_currency(e_currency, rates, base_currency)
+                        e_amount_base = calc.convert_amount(e_amount, e_currency, rates, base_currency)
                         sheets.update_row(
                             "SaaSMonthly", "entry_id", m_row["entry_id"],
                             {"product": e_product, "month": e_month_clean, "amount": e_amount,
-                             "currency": e_currency, "notes": e_notes},
+                             "currency": e_currency, "notes": e_notes,
+                             "fx_rate_at_log": e_fx_rate, "amount_base_at_log": e_amount_base,
+                             "base_currency_at_log": base_currency},
                         )
                         st.toast("Monthly total updated", icon="✅")
                         st.rerun()
@@ -210,6 +224,8 @@ with tab_txn:
             if amount <= 0:
                 st.error("Amount must be greater than 0.")
             else:
+                fx_rate = calc.rate_for_currency(currency, rates, base_currency)
+                amount_base = calc.convert_amount(amount, currency, rates, base_currency)
                 tid = sheets.create_saas_transaction({
                     "product": product,
                     "date": str(txn_date),
@@ -218,6 +234,9 @@ with tab_txn:
                     "customer": customer,
                     "payment_method": payment_method,
                     "notes": notes,
+                    "fx_rate_at_log": fx_rate,
+                    "amount_base_at_log": amount_base,
+                    "base_currency_at_log": base_currency,
                 })
                 st.toast(f"Transaction {tid} logged!", icon="✅")
                 st.rerun()
@@ -270,11 +289,15 @@ with tab_txn:
                     if e_amount <= 0:
                         st.error("Amount must be greater than 0.")
                     else:
+                        e_fx_rate = calc.rate_for_currency(e_currency, rates, base_currency)
+                        e_amount_base = calc.convert_amount(e_amount, e_currency, rates, base_currency)
                         sheets.update_row(
                             "SaaSTransactions", "transaction_id", t_row["transaction_id"],
                             {"product": e_product, "date": str(e_date), "amount": e_amount,
                              "currency": e_currency, "customer": e_customer,
-                             "payment_method": e_payment_method, "notes": e_notes},
+                             "payment_method": e_payment_method, "notes": e_notes,
+                             "fx_rate_at_log": e_fx_rate, "amount_base_at_log": e_amount_base,
+                             "base_currency_at_log": base_currency},
                         )
                         st.toast("Transaction updated", icon="✅")
                         st.rerun()
