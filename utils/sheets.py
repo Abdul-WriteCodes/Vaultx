@@ -357,3 +357,28 @@ def upsert_exchange_rate(currency_code: str, rate_to_base: float):
             return
     ws.append_row(["exchange_rate", f"{currency_code}={rate_to_base}"])
     _invalidate_cache()
+
+
+def set_saas_revenue_goal(amount: float):
+    """saas_revenue_goal is a single-value setting (in the reporting
+    currency) - remove any existing entry before adding the new one so
+    there's never more than one. Used to draw the reference line on the
+    'Total SaaS Revenue Growth' chart."""
+    ws = _worksheet("Settings")
+    records = ws.get_all_records()
+    rows_to_delete = [i + 2 for i, r in enumerate(records) if r["setting_type"] == "saas_revenue_goal"]
+    for row_num in sorted(rows_to_delete, reverse=True):
+        ws.delete_rows(row_num)
+    ws.append_row(["saas_revenue_goal", amount])
+    _invalidate_cache()
+
+
+def clear_saas_revenue_goal():
+    """Remove the saas_revenue_goal setting entirely (any value) so the
+    growth chart's reference line goes away."""
+    ws = _worksheet("Settings")
+    records = ws.get_all_records()
+    rows_to_delete = [i + 2 for i, r in enumerate(records) if r["setting_type"] == "saas_revenue_goal"]
+    for row_num in sorted(rows_to_delete, reverse=True):
+        ws.delete_rows(row_num)
+    _invalidate_cache()
