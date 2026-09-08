@@ -62,6 +62,18 @@ def get_base_currency(settings: pd.DataFrame) -> str:
     return vals[0] if vals else "USD"
 
 
+def get_saas_revenue_goal(settings: pd.DataFrame) -> float:
+    """Optional flat target (in the reporting currency) for the 'Total
+    SaaS Revenue Growth' chart's reference line. None if not set."""
+    vals = settings.loc[settings["setting_type"] == "saas_revenue_goal", "value"].tolist()
+    if not vals:
+        return None
+    try:
+        return float(vals[0])
+    except (ValueError, TypeError):
+        return None
+
+
 def get_fx_rates(settings: pd.DataFrame) -> dict:
     """Returns {currency_code: rate_to_base}. A currency with no saved
     rate is NOT silently treated as 1:1 - callers should flag it."""
