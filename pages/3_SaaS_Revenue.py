@@ -94,6 +94,15 @@ with tab_overview:
             opts = charts.stacked_bar_chart(pivot.index.tolist(), series_data, axis_name=base_currency, height="340px")
             st_echarts(options=opts, height="340px")
 
+        st.subheader(f"Total SaaS Revenue Growth, Cumulative, All Products ({base_currency})")
+        st.caption("Every product summed together, running total month over month.")
+        monthly_total = calc.saas_monthly_total(reconciled)
+        monthly_total["cumulative"] = monthly_total["revenue"].cumsum()
+        opts = charts.area_growth_chart(
+            monthly_total["month"].tolist(), monthly_total["cumulative"].round(2).tolist(), axis_name=base_currency
+        )
+        st_echarts(options=opts, height="320px")
+
         st.subheader("Product + Month Detail")
         display = reconciled.copy()
         display["revenue"] = display["revenue"].map(lambda v: fmt_money(v, base_currency))
