@@ -267,6 +267,7 @@ def area_growth_chart(categories, values, axis_name="", height="320px", color=No
         "areaStyle": {"color": _gradient(c + "70", c + "05")},
         "data": values,
     }
+    y_max = None
     if goal_value is not None:
         label = goal_label or f"Goal: {goal_value:,.0f}"
         series["markLine"] = {
@@ -279,6 +280,13 @@ def area_growth_chart(categories, values, axis_name="", height="320px", color=No
             },
             "data": [{"yAxis": goal_value}],
         }
+        # ECharts auto-scales the axis to fit series DATA only - a
+        # markLine value doesn't extend it, so a goal well above current
+        # revenue would draw off-screen above the visible chart unless
+        # we explicitly stretch the axis to include it (with headroom
+        # so the goal line and its label aren't flush against the top edge).
+        data_max = max(values) if values else 0
+        y_max = max(data_max, goal_value) * 1.15
     return {
         "backgroundColor": "transparent",
         "grid": {"left": "8%", "right": "5%", "top": "10%", "bottom": "12%", "containLabel": True},
@@ -294,7 +302,7 @@ def area_growth_chart(categories, values, axis_name="", height="320px", color=No
             "axisTick": {"show": False},
         },
         "yAxis": {
-            "type": "value", "name": axis_name,
+            "type": "value", "name": axis_name, "max": y_max,
             "nameTextStyle": {"color": TEXT_COLOR, "fontFamily": FONT_FAMILY},
             "splitLine": {"lineStyle": {"color": GRID_LINE_COLOR, "type": "dashed"}},
             "axisLabel": {"color": TEXT_COLOR, "fontFamily": FONT_FAMILY},
