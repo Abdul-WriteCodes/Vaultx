@@ -102,6 +102,10 @@ with tab_overview:
         st.subheader(f"Total SaaS Revenue Growth, Cumulative, All Products ({base_currency})")
         st.caption("Every product summed together, running total month over month.")
 
+        monthly_total = calc.saas_monthly_total(reconciled)
+        monthly_total["cumulative"] = monthly_total["revenue"].cumsum()
+        current_total = monthly_total["cumulative"].iloc[-1] if not monthly_total.empty else 0.0
+
         goal = calc.get_saas_revenue_goal(settings)
         with st.expander(f"🎯 Revenue goal: {fmt_money(goal, base_currency) if goal else 'not set'}", expanded=False):
             gcol1, gcol2 = st.columns([3, 1])
@@ -125,8 +129,14 @@ with tab_overview:
                 st.toast("Revenue goal cleared", icon="🗑️")
                 st.rerun()
 
-        monthly_total = calc.saas_monthly_total(reconciled)
-        monthly_total["cumulative"] = monthly_total["revenue"].cumsum()
+        if goal:
+            pct = min(current_total / goal, 1.0) if goal > 0 else 0.0
+            st.markdown(
+                f"**{fmt_money(current_total, base_currency)} / {fmt_money(goal, base_currency)} "
+                f"— {pct * 100:.0f}% to goal**"
+            )
+            st.progress(pct)
+
         opts = charts.area_growth_chart(
             monthly_total["month"].tolist(), monthly_total["cumulative"].round(2).tolist(),
             axis_name=base_currency, goal_value=goal,
