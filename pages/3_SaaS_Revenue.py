@@ -101,10 +101,36 @@ with tab_overview:
 
         st.subheader(f"Total SaaS Revenue Growth, Cumulative, All Products ({base_currency})")
         st.caption("Every product summed together, running total month over month.")
+
+        goal = calc.get_saas_revenue_goal(settings)
+        with st.expander(f"🎯 Revenue goal: {fmt_money(goal, base_currency) if goal else 'not set'}", expanded=False):
+            gcol1, gcol2 = st.columns([3, 1])
+            with gcol1:
+                new_goal = st.number_input(
+                    f"Target total revenue ({base_currency})", min_value=0.0, step=100.0,
+                    value=float(goal) if goal else 0.0, key="saas_goal_input",
+                )
+            with gcol2:
+                st.write("")
+                st.write("")
+                if st.button("Save Goal", key="save_saas_goal"):
+                    if new_goal <= 0:
+                        st.error("Goal must be greater than 0.")
+                    else:
+                        sheets.set_saas_revenue_goal(new_goal)
+                        st.toast("Revenue goal saved", icon="🎯")
+                        st.rerun()
+            if goal and st.button("Clear Goal", key="clear_saas_goal"):
+                sheets.clear_saas_revenue_goal()
+                st.toast("Revenue goal cleared", icon="🗑️")
+                st.rerun()
+
         monthly_total = calc.saas_monthly_total(reconciled)
         monthly_total["cumulative"] = monthly_total["revenue"].cumsum()
         opts = charts.area_growth_chart(
-            monthly_total["month"].tolist(), monthly_total["cumulative"].round(2).tolist(), axis_name=base_currency
+            monthly_total["month"].tolist(), monthly_total["cumulative"].round(2).tolist(),
+            axis_name=base_currency, goal_value=goal,
+            goal_label=f"Goal: {fmt_money(goal, base_currency)}" if goal else None,
         )
         st_echarts(options=opts, height="320px")
 
