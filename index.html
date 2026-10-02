@@ -1,0 +1,607 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>8P8 — Sandbox for Building</title>
+  <meta
+    name="description"
+    content="8P8 is Abdul-Azeez Olohunjuwon's sandbox for building useful digital products, practical systems and solutions."
+  />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #171717;
+      --muted: #6f6f6f;
+      --line: #e8e8e8;
+      --green: #16834b;
+      --green-dark: #0f6639;
+      --soft: #f7f9f7;
+      --max: 760px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        "SFMono-Regular",
+        "Cascadia Code",
+        "Roboto Mono",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+      font-size: 14px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+    }
+
+    /* ---------------- NAV ---------------- */
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .logo {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .logo span {
+      color: var(--green);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #555;
+      padding: 5px 10px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--green);
+      border-color: #dce9e1;
+      background: #fafdfb;
+    }
+
+    /* ---------------- HERO ---------------- */
+
+    header {
+      padding: 78px 0 65px;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 6vw, 48px);
+      line-height: 1.15;
+      letter-spacing: -2.5px;
+      font-weight: 700;
+      max-width: 650px;
+    }
+
+    .headline {
+      margin-top: 18px;
+      color: var(--muted);
+      max-width: 610px;
+      font-size: 14px;
+    }
+
+    .headline strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .location {
+      margin-top: 25px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* ---------------- SECTIONS ---------------- */
+
+    section {
+      padding: 48px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-label {
+      color: var(--green);
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+
+    .about-text {
+      max-width: 680px;
+      color: #303030;
+    }
+
+    .about-text p {
+      margin-bottom: 18px;
+    }
+
+    .about-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    .bullet-list {
+      list-style: none;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 25px;
+      margin: 10px 0;
+      color: #303030;
+    }
+
+    .bullet-list li::before {
+      content: "·";
+      position: absolute;
+      left: 5px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    /* ---------------- BUILDS ---------------- */
+
+    .build-list {
+      list-style: none;
+    }
+
+    .build-item {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 25px;
+      padding: 17px 0;
+      border-bottom: 1px dashed #e7e7e7;
+    }
+
+    .build-item:first-child {
+      border-top: 1px dashed #e7e7e7;
+    }
+
+    .build-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .build-name::before {
+      content: "↳ ";
+      color: var(--green);
+      font-weight: 400;
+    }
+
+    .build-description {
+      color: var(--muted);
+    }
+
+    .build-description a {
+      color: var(--green);
+    }
+
+    .build-description a:hover {
+      text-decoration: underline;
+    }
+
+    /* ---------------- WRITING ---------------- */
+
+    .writing-list {
+      list-style: none;
+    }
+
+    .writing-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 20px;
+      padding: 15px 0;
+      border-bottom: 1px dashed #e7e7e7;
+    }
+
+    .writing-item:first-child {
+      border-top: 1px dashed #e7e7e7;
+    }
+
+    .writing-title {
+      color: var(--text);
+    }
+
+    .writing-title:hover {
+      color: var(--green);
+    }
+
+    .writing-meta {
+      color: #999;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    /* ---------------- PRINCIPLES ---------------- */
+
+    .principles {
+      background: var(--soft);
+      border: 1px solid #edf1ed;
+      padding: 28px;
+      margin-top: 5px;
+    }
+
+    .principles p {
+      color: #3c3c3c;
+      margin-bottom: 10px;
+    }
+
+    .principles p:last-child {
+      margin-bottom: 0;
+    }
+
+    .principles strong {
+      color: var(--green-dark);
+      font-weight: 600;
+    }
+
+    /* ---------------- CONTACT ---------------- */
+
+    .contact-line {
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .contact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .contact-links a {
+      border: 1px solid #dedede;
+      padding: 6px 11px;
+      border-radius: 999px;
+      color: #444;
+      transition: 0.2s ease;
+    }
+
+    .contact-links a:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: #fbfefc;
+    }
+
+    /* ---------------- FOOTER ---------------- */
+
+    footer {
+      padding: 35px 0 45px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      color: #999;
+      font-size: 11px;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    /* ---------------- MOBILE ---------------- */
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(calc(100% - 28px), var(--max));
+      }
+
+      nav {
+        padding-top: 20px;
+      }
+
+      .nav-links {
+        gap: 2px;
+      }
+
+      .nav-links a {
+        padding: 4px 7px;
+        font-size: 11px;
+      }
+
+      header {
+        padding: 58px 0 48px;
+      }
+
+      h1 {
+        letter-spacing: -1.7px;
+      }
+
+      section {
+        padding: 40px 0;
+      }
+
+      .build-item {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+
+      .writing-item {
+        display: block;
+      }
+
+      .writing-meta {
+        display: block;
+        margin-top: 3px;
+      }
+
+      .principles {
+        padding: 21px;
+      }
+
+      footer {
+        display: block;
+      }
+
+      footer span {
+        display: block;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+
+    <!-- NAVIGATION -->
+    <nav>
+      <a href="#" class="logo">8P<span>8</span></a>
+
+      <ul class="nav-links">
+        <li><a href="#about">about</a></li>
+        <li><a href="#builds">builds</a></li>
+        <li><a href="#writing">writing</a></li>
+        <li><a href="#contact">contact</a></li>
+      </ul>
+    </nav>
+
+
+    <!-- INTRO -->
+    <header>
+      <div class="eyebrow">8p8.dev / sandbox</div>
+
+      <h1>
+        Building useful things<br />
+        from the green side.
+      </h1>
+
+      <p class="headline">
+        <strong>8P8</strong> is my sandbox for building digital products,
+        practical systems and solutions — while learning, experimenting
+        and documenting what happens along the way.
+      </p>
+
+      <p class="location">
+        Nigeria 🇳🇬 · Building in public · Independent
+      </p>
+    </header>
+
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="section-label">About:</div>
+
+      <div class="about-text">
+        <p>
+          I'm <strong>Abdul-Azeez Olohunjuwon</strong> — a bootstrapper,
+          SaaS builder and researcher interested in the intersection of
+          software, AI, data and practical problem solving.
+        </p>
+
+        <ul class="bullet-list">
+          <li>I develop products, systems and people.</li>
+          <li>I build and ship before everything is perfect.</li>
+          <li>I explore underserved problems and turn them into useful tools.</li>
+          <li>I use AI as leverage, not as a substitute for thinking.</li>
+          <li>I document the process — including what doesn't work.</li>
+        </ul>
+      </div>
+    </section>
+
+
+    <!-- SANDBOX -->
+    <section>
+      <div class="section-label">The Sandbox:</div>
+
+      <div class="principles">
+        <p><strong>01.</strong> Find a real problem.</p>
+        <p><strong>02.</strong> Build the smallest useful thing.</p>
+        <p><strong>03.</strong> Put it in front of people.</p>
+        <p><strong>04.</strong> Listen to what happens.</p>
+        <p><strong>05.</strong> Improve, distribute, repeat.</p>
+      </div>
+    </section>
+
+
+    <!-- BUILDS -->
+    <section id="builds">
+      <div class="section-label">Selected builds:</div>
+
+      <ul class="build-list">
+
+        <li class="build-item">
+          <div class="build-name">
+            8P8
+          </div>
+          <div class="build-description">
+            My digital sandbox — a place to experiment with software,
+            AI systems, products and ideas.
+          </div>
+        </li>
+
+        <li class="build-item">
+          <div class="build-name">
+            BizTrack-OS
+          </div>
+          <div class="build-description">
+            A lightweight business operating system for small businesses,
+            starting with Nigerian SMEs.
+          </div>
+        </li>
+
+        <li class="build-item">
+          <div class="build-name">
+            Bayantx360
+          </div>
+          <div class="build-description">
+            Research, data analytics and AI-powered tools for researchers,
+            institutions and businesses.
+          </div>
+        </li>
+
+        <li class="build-item">
+          <div class="build-name">
+            Crea8it
+          </div>
+          <div class="build-description">
+            A practical learning and building environment for people
+            developing technology skills and products.
+          </div>
+        </li>
+
+      </ul>
+    </section>
+
+
+    <!-- WRITING -->
+    <section id="writing">
+      <div class="section-label">Writing:</div>
+
+      <ul class="writing-list">
+
+        <li class="writing-item">
+          <a
+            class="writing-title"
+            href="/blog/the-first-rule-of-the-sandbox-ship.html"
+          >
+            The First Rule of the Sandbox: Ship
+          </a>
+          <span class="writing-meta">Principles · 3 min</span>
+        </li>
+
+        <li class="writing-item">
+          <a
+            class="writing-title"
+            href="/blog/building-in-public.html"
+          >
+            Building in Public
+          </a>
+          <span class="writing-meta">Build Log</span>
+        </li>
+
+        <li class="writing-item">
+          <a
+            class="writing-title"
+            href="/blog/from-zero-to-one.html"
+          >
+            From $0 to $1
+          </a>
+          <span class="writing-meta">Bootstrapping</span>
+        </li>
+
+        <li class="writing-item">
+          <a
+            class="writing-title"
+            href="/blog/ai-as-leverage.html"
+          >
+            AI as Leverage
+          </a>
+          <span class="writing-meta">AI · Building</span>
+        </li>
+
+      </ul>
+    </section>
+
+
+    <!-- CURRENTLY -->
+    <section>
+      <div class="section-label">Currently:</div>
+
+      <div class="about-text">
+        <ul class="bullet-list">
+          <li>Building and bootstrapping from Nigeria.</li>
+          <li>Exploring AI systems and developer infrastructure.</li>
+          <li>Shipping small products and testing distribution.</li>
+          <li>Researching, writing and learning in public.</li>
+        </ul>
+      </div>
+    </section>
+
+
+    <!-- CONTACT -->
+    <section id="contact">
+      <div class="section-label">Contact:</div>
+
+      <p class="contact-line">
+        Want to talk about building, research, AI or a strange idea?
+      </p>
+
+      <div class="contact-links">
+        <a href="mailto:hello@8p8.dev">email</a>
+        <a href="https://x.com/" target="_blank" rel="noopener">x</a>
+        <a href="https://www.linkedin.com/" target="_blank" rel="noopener">
+          linkedin
+        </a>
+        <a href="https://github.com/" target="_blank" rel="noopener">
+          github
+        </a>
+      </div>
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer>
+      <span>© 2026 8P8</span>
+      <span>Built with curiosity <span class="green">●</span></span>
+    </footer>
+
+  </div>
+
+</body>
+</html>
+
